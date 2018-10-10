@@ -8,37 +8,47 @@ const childProcessMocked = require('child_process');
 const manager = require('../../../lib/manager/gradle/index');
 
 const config = {
-  localDir: "localDir"
+  localDir: 'localDir',
 };
 
-const updatesDependenciesReport = fs.readFileSync('test/_fixtures/gradle/updatesReport.json', 'utf8');
+const updatesDependenciesReport = fs.readFileSync(
+  'test/_fixtures/gradle/updatesReport.json',
+  'utf8'
+);
 
-describe("manager/gradle", () => {
-
+describe('manager/gradle', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     fsMocked.readFileSync = jest.fn(() => updatesDependenciesReport);
   });
 
-  describe("extractDependencies", () => {
+  describe('extractDependencies', () => {
     it('should return gradle dependencies', () => {
-      const dependencies = manager.extractDependencies("content", "filename", config);
+      const dependencies = manager.extractDependencies(
+        'content',
+        'filename',
+        config
+      );
 
-      expect(dependencies).toEqual({"deps": [{"name": "dummy"}]})
+      expect(dependencies).toEqual({ deps: [{ name: 'dummy' }] });
     });
 
     it('should execute gradle with the proper parameters', () => {
-      manager.extractDependencies("content", "filename", config);
+      manager.extractDependencies('content', 'filename', config);
 
       expect(childProcessMocked.execSync.mock.calls.length).toBe(1);
-      expect(childProcessMocked.execSync.mock.calls[0][0]).toBe("gradle dependencyUpdates -Drevision=release");
-      expect(childProcessMocked.execSync.mock.calls[0][1]).toMatchObject({cwd: "localDir"});
+      expect(childProcessMocked.execSync.mock.calls[0][0]).toBe(
+        'gradle dependencyUpdates -Drevision=release'
+      );
+      expect(childProcessMocked.execSync.mock.calls[0][1]).toMatchObject({
+        cwd: 'localDir',
+      });
     });
   });
 
-  describe("getPackageUpdates", () => {
-
+  describe('getPackageUpdates', () => {
     it('should return outdated dependencies', () => {
+      // prettier-ignore
       const expectedOutdatedDependencies = [{
           depGroup: "cglib", name: "cglib-nodep", version: "3.1",
           available: {release: "3.2.8", milestone: null, integration: null},
@@ -62,24 +72,32 @@ describe("manager/gradle", () => {
       manager.getPackageUpdates(config);
 
       expect(fsMocked.readFileSync.mock.calls.length).toBe(1);
-      expect(fsMocked.readFileSync.mock.calls[0][0]).toBe("localDir/build/dependencyUpdates/report.json");
+      expect(fsMocked.readFileSync.mock.calls[0][0]).toBe(
+        'localDir/build/dependencyUpdates/report.json'
+      );
     });
   });
 
-  describe("updateDependency", () => {
-
+  describe('updateDependency', () => {
     it('should update an existing dependency', () => {
-      const buildGradleContent = fs.readFileSync('test/_fixtures/gradle/build.gradle.example1', 'utf8');
+      const buildGradleContent = fs.readFileSync(
+        'test/_fixtures/gradle/build.gradle.example1',
+        'utf8'
+      );
+      // prettier-ignore
       const upgrade = {
-        depGroup: "cglib", name: "cglib-nodep", version: "3.1",
-        available: {release: "3.2.8", milestone: null, integration: null},
+        depGroup: 'cglib', name: 'cglib-nodep', version: '3.1',
+        available: { release: '3.2.8', milestone: null, integration: null },
       };
-      const buildGradleContentUpdated = manager.updateDependency(buildGradleContent, upgrade);
+      const buildGradleContentUpdated = manager.updateDependency(
+        buildGradleContent,
+        upgrade
+      );
 
-      expect(buildGradleContent).not.toMatch("cglib:cglib-nodep:3.2.8");
+      expect(buildGradleContent).not.toMatch('cglib:cglib-nodep:3.2.8');
 
-      expect(buildGradleContentUpdated).toMatch("cglib:cglib-nodep:3.2.8");
-      expect(buildGradleContentUpdated).not.toMatch("cglib:cglib-nodep:3.1");
+      expect(buildGradleContentUpdated).toMatch('cglib:cglib-nodep:3.2.8');
+      expect(buildGradleContentUpdated).not.toMatch('cglib:cglib-nodep:3.1');
     });
   });
 });

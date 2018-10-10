@@ -34,8 +34,7 @@ describe('lib/manager/gradle/updateGradleVersion', () => {
   });
 
   it('returns a file updated if the version defined as map is found', () => {
-    const gradleFile =
-      `compile group  : 'mysql'               , 
+    const gradleFile = `compile group  : 'mysql'               , 
                name   : 'mysql-connector-java', 
                version: '6.0.5'`;
     const updatedGradleFile = gradle.updateGradleVersion(
