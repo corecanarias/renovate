@@ -44,6 +44,14 @@ describe('manager/gradle', () => {
         cwd: 'localDir',
       });
     });
+
+    it('should write the gradle config file in the tmp dir', () => {
+      manager.extractDependencies('content', 'filename', config);
+
+      expect(fsMocked.writeFileSync.mock.calls.length).toBe(1);
+      expect(fsMocked.writeFileSync.mock.calls[0][0]).toBe('localDir/filename');
+      expect(fsMocked.writeFileSync.mock.calls[0][1]).toBe('content');
+    });
   });
 
   describe('getPackageUpdates', () => {
