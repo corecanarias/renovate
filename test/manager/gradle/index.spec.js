@@ -1,11 +1,11 @@
-const manager = require('../../../lib/manager/gradle/index');
-
 jest.mock('fs');
 jest.mock('child_process');
 
 const fsMocked = require('fs');
 const fs = require('fs-extra');
-const child_processMocked = require('child_process');
+const childProcessMocked = require('child_process');
+
+const manager = require('../../../lib/manager/gradle/index');
 
 const config = {
   localDir: "localDir"
@@ -21,24 +21,24 @@ describe("manager/gradle", () => {
   });
 
   describe("extractDependencies", () => {
-    it('should return gradle dependencies', function () {
+    it('should return gradle dependencies', () => {
       const dependencies = manager.extractDependencies("content", "filename", config);
 
       expect(dependencies).toEqual({"deps": [{"name": "dummy"}]})
     });
 
-    it('should execute gradle with the proper parameters', function () {
+    it('should execute gradle with the proper parameters', () => {
       manager.extractDependencies("content", "filename", config);
 
-      expect(child_processMocked.execSync.mock.calls.length).toBe(1);
-      expect(child_processMocked.execSync.mock.calls[0][0]).toBe("gradle dependencyUpdates -Drevision=release");
-      expect(child_processMocked.execSync.mock.calls[0][1]).toMatchObject({cwd: "localDir"});
+      expect(childProcessMocked.execSync.mock.calls.length).toBe(1);
+      expect(childProcessMocked.execSync.mock.calls[0][0]).toBe("gradle dependencyUpdates -Drevision=release");
+      expect(childProcessMocked.execSync.mock.calls[0][1]).toMatchObject({cwd: "localDir"});
     });
   });
 
   describe("getPackageUpdates", () => {
 
-    it('should return outdated dependencies', function () {
+    it('should return outdated dependencies', () => {
       const expectedOutdatedDependencies = [{
           depGroup: "cglib", name: "cglib-nodep", version: "3.1",
           available: {release: "3.2.8", milestone: null, integration: null},
@@ -58,7 +58,7 @@ describe("manager/gradle", () => {
       expect(outdatedDependencies).toMatchObject(expectedOutdatedDependencies);
     });
 
-    it('should read the right updates report', function () {
+    it('should read the right updates report', () => {
       manager.getPackageUpdates(config);
 
       expect(fsMocked.readFileSync.mock.calls.length).toBe(1);
@@ -68,7 +68,7 @@ describe("manager/gradle", () => {
 
   describe("updateDependency", () => {
 
-    it('should update an existing dependency', function () {
+    it('should update an existing dependency', () => {
       const buildGradleContent = fs.readFileSync('test/_fixtures/gradle/build.gradle.example1', 'utf8');
       const upgrade = {
         depGroup: "cglib", name: "cglib-nodep", version: "3.1",
