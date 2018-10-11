@@ -591,7 +591,7 @@ describe('platform/gitlab', () => {
           },
         ],
       });
-      get.mockReturnValueOnce({ body: { body: 'new-content' } });
+      get.mockReturnValueOnce({ body: { description: 'new-content' } });
       const res = await gitlab.findIssue('title-2');
       expect(res).not.toBeNull();
     });
@@ -626,7 +626,7 @@ describe('platform/gitlab', () => {
           },
         ],
       });
-      get.mockReturnValueOnce({ body: { body: 'new-content' } });
+      get.mockReturnValueOnce({ body: { description: 'new-content' } });
       const res = await gitlab.ensureIssue('title-2', 'newer-content');
       expect(res).toEqual('updated');
     });
@@ -643,7 +643,7 @@ describe('platform/gitlab', () => {
           },
         ],
       });
-      get.mockReturnValueOnce({ body: { body: 'newer-content' } });
+      get.mockReturnValueOnce({ body: { description: 'newer-content' } });
       const res = await gitlab.ensureIssue('title-2', 'newer-content');
       expect(res).toBe(null);
     });
@@ -892,11 +892,19 @@ describe('platform/gitlab', () => {
       expect(get.put.mock.calls.length).toEqual(1);
     });
   });
+  const prBody = `https://github.com/foo/bar/issues/5 plus also [a link](https://github.com/foo/bar/issues/5
+
+  Pull Requests are the best, here are some PRs.
+
+  ## Open
+
+These updates have all been created already. Click a checkbox below to force a retry/rebase of any.
+
+ - [ ] <!-- rebase-branch=renovate/major-got-packages -->[build(deps): update got packages (major)](../pull/2433) (\`gh-got\`, \`gl-got\`, \`got\`)
+`;
   describe('getPrBody(input)', () => {
     it('returns updated pr body', () => {
-      const input =
-        'https://github.com/foo/bar/issues/5 plus also [a link](https://github.com/foo/bar/issues/5)';
-      expect(gitlab.getPrBody(input)).toMatchSnapshot();
+      expect(gitlab.getPrBody(prBody)).toMatchSnapshot();
     });
   });
   describe('getFile(filePath, branchName)', () => {

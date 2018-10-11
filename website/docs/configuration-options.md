@@ -574,7 +574,7 @@ Note: "Package file" is predefined in the default `prBodyDefinitions` object so 
 
 ## prBodyDefinitions
 
-You can configure this object if you with to either (a) modify the template for an existing table column in PR bodies, or (b) you wish to _add_ a definition for a new/additional column.
+You can configure this object to either (a) modify the template for an existing table column in PR bodies, or (b) you wish to _add_ a definition for a new/additional column.
 
 Here is an example of modifying the default value for the "Package" column to put it inside a `<code></code>` block:
 
@@ -805,6 +805,28 @@ This feature is added for people migrating from alternative services who are use
 Language support is limited to those listed below:
 
 - **Node.js** - [Read our Node.js documentation](https://renovatebot.com/docs/node#configuring-support-policy)
+
+## terraform
+
+Currently Terraform support is limited to Terraform registry sources and github sources that include semver refs, e.g. like `github.com/hashicorp/example?ref=v1.0.0`.
+
+Fixed versions like the following will receive a PR whenever there is a newer version available:
+
+```
+module "consul" {
+  source  = "hashicorp/consul/aws"
+  version = "0.0.5"
+  servers = 3
+}
+```
+
+The following _range_ constraints are also supported:
+
+- `>= 1.2.0`: version 1.2.0 or newer
+- `<= 1.2.0`: version 1.2.0 or older
+- `~> 1.2.0`: any non-beta version >= 1.2.0 and < 1.3.0, e.g. 1.2.X
+- `~> 1.2`: any non-beta version >= 1.2.0 and < 2.0.0, e.g. 1.X.Y
+- `>= 1.0.0`, <= 2.0.0`: any version between 1.0.0 and 2.0.0 inclusive
 
 ## timezone
 
