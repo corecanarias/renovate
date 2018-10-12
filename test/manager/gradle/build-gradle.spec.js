@@ -48,4 +48,54 @@ describe('lib/manager/gradle/updateGradleVersion', () => {
                version: '7.0.0'`
     );
   });
+
+  it('should returns a file updated if the version defined in a variable as a string is found', () => {
+    const gradleFile = `String mysqlVersion = "6.0.5"
+    runtime (  'mysql:mysql-connector-java:\$mysqlVersion'  )
+    `;
+    const updatedGradleFile = gradle.updateGradleVersion(
+      gradleFile,
+      { group: 'mysql', name: 'mysql-connector-java', version: '6.0.5' },
+      '7.0.0'
+    );
+    expect(updatedGradleFile).toEqual(`String mysqlVersion = "7.0.0"
+    runtime (  'mysql:mysql-connector-java:\$mysqlVersion'  )
+    `
+    );
+  });
+
+  it('should returns a file updated if the version defined in a expression as a string is found', () => {
+    const gradleFile = `String mysqlVersion = "6.0.5"
+    runtime (  'mysql:mysql-connector-java:\${mysqlVersion}'  )
+    `;
+    const updatedGradleFile = gradle.updateGradleVersion(
+      gradleFile,
+      { group: 'mysql', name: 'mysql-connector-java', version: '6.0.5' },
+      '7.0.0'
+    );
+    expect(updatedGradleFile).toEqual(`String mysqlVersion = "7.0.0"
+    runtime (  'mysql:mysql-connector-java:\${mysqlVersion}'  )
+    `
+    );
+  });
+
+  it('should returns a file updated if the version defined in a variable as a map is found', () => {
+    const gradleFile = `String mysqlVersion = "6.0.5"
+               compile group  : 'mysql'               , 
+               name           : 'mysql-connector-java', 
+               version        : mysqlVersion
+               `;
+    const updatedGradleFile = gradle.updateGradleVersion(
+      gradleFile,
+      { group: 'mysql', name: 'mysql-connector-java', version: '6.0.5' },
+      '7.0.0'
+    );
+    expect(updatedGradleFile).toEqual(
+      `String mysqlVersion = "7.0.0"
+               compile group  : 'mysql'               , 
+               name           : 'mysql-connector-java', 
+               version        : mysqlVersion
+               `
+    );
+  });
 });
