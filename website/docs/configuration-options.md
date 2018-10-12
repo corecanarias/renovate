@@ -223,6 +223,10 @@ Configuration added here applies for all Go-related updates, however currently t
 
 Configuration for Go Modules (`go mod`). Supercedes anything in the `go` config object.
 
+## gradle
+
+Configuration for Java gradle projects
+
 ## group
 
 The default configuration for groups are essentially internal to Renovate and you normally shouldn't need to modify them. However, you may choose to _add_ settings to any group by defining your own `group` configuration object.
@@ -287,6 +291,10 @@ By default, Renovate won't update any packages to unstable versions (e.g. `4.0.0
 If you wish for Renovate to process only select paths in the repository, use `includePaths`.
 If instead you need to just exclude/ignore certain paths then consider `ignorePaths` instead.
 If you are more interested in including only certain package managers (e.g. `npm`), then consider `enabledManagers` instead.
+
+## java
+
+Use this configuration option for shared config across all java projects.
 
 ## js
 
