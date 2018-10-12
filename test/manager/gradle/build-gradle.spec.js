@@ -60,8 +60,7 @@ describe('lib/manager/gradle/updateGradleVersion', () => {
     );
     expect(updatedGradleFile).toEqual(`String mysqlVersion = "7.0.0"
     runtime (  'mysql:mysql-connector-java:$mysqlVersion'  )
-    `
-    );
+    `);
   });
 
   it('should returns a file updated if the version defined in a expression as a string is found', () => {
@@ -75,8 +74,7 @@ describe('lib/manager/gradle/updateGradleVersion', () => {
     );
     expect(updatedGradleFile).toEqual(`String mysqlVersion = "7.0.0"
     runtime (  'mysql:mysql-connector-java:\${mysqlVersion}'  )
-    `
-    );
+    `);
   });
 
   it('should returns a file updated if the version defined in a variable as a map is found', () => {
