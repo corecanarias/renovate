@@ -36,9 +36,8 @@ describe('manager/gradle', () => {
     it('should execute gradle with the proper parameters', () => {
       manager.extractDependencies('content', 'filename', config);
 
-      expect(childProcessMocked.execSync.mock.calls.length).toBe(1);
       expect(childProcessMocked.execSync.mock.calls[0][0]).toBe(
-        'gradle dependencyUpdates -Drevision=release'
+        'gradle --init-script init.gradle dependencyUpdates -Drevision=release'
       );
       expect(childProcessMocked.execSync.mock.calls[0][1]).toMatchObject({
         cwd: 'localDir',
@@ -48,9 +47,14 @@ describe('manager/gradle', () => {
     it('should write the gradle config file in the tmp dir', () => {
       manager.extractDependencies('content', 'filename', config);
 
-      expect(fsMocked.writeFileSync.mock.calls.length).toBe(1);
       expect(fsMocked.writeFileSync.mock.calls[0][0]).toBe('localDir/filename');
       expect(fsMocked.writeFileSync.mock.calls[0][1]).toBe('content');
+    });
+
+    it('should configure the useLatestVersion plugin', () => {
+      manager.extractDependencies('content', 'filename', config);
+
+      expect(fsMocked.writeFileSync.mock.calls[1][0]).toBe('localDir/init.gradle');
     });
   });
 
