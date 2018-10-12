@@ -54,7 +54,9 @@ describe('manager/gradle', () => {
     it('should configure the useLatestVersion plugin', () => {
       manager.extractDependencies('content', 'filename', config);
 
-      expect(fsMocked.writeFileSync.mock.calls[1][0]).toBe('localDir/init.gradle');
+      expect(fsMocked.writeFileSync.mock.calls[1][0]).toBe(
+        'localDir/init.gradle'
+      );
     });
   });
 
