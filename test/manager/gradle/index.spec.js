@@ -9,6 +9,35 @@ const manager = require('../../../lib/manager/gradle/index');
 
 const config = {
   localDir: 'localDir',
+  gradle: {
+    timeout: 20,
+  },
+};
+
+// prettier-ignore
+const depedenciesFromBuildGradleExample1 = {
+  deps: [{
+      currentValue: '0.1',
+      depName: 'com.fkorotkov:gradle-libraries-plugin',
+    }, {
+      currentValue: '0.2.3',
+      depName: 'gradle.plugin.se.patrikerdes:gradle-use-latest-versions-plugin',
+    }, {
+      currentValue: '1.3',
+      depName: 'org.hamcrest:hamcrest-core',
+    }, {
+      currentValue: '3.1',
+      depName: 'cglib:cglib-nodep',
+    }, {
+      currentValue: '6.0.9.RELEASE',
+      depName: 'org.grails:gorm-hibernate5-spring-boot',
+    }, {
+      currentValue: '5.1.41',
+      depName: 'mysql:mysql-connector-java',
+    }, {
+      currentValue: '1.5.2.RELEASE',
+      depName: 'org.springframework.boot:spring-boot-starter-test',
+  }],
 };
 
 const updatesDependenciesReport = fs.readFileSync(
@@ -20,6 +49,9 @@ describe('manager/gradle', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     fsMocked.readFileSync = jest.fn(() => updatesDependenciesReport);
+    childProcessMocked.execSync = jest.fn(() =>
+      Buffer.from('gradle output', 'utf8')
+    );
   });
 
   describe('extractDependencies', () => {
@@ -30,7 +62,33 @@ describe('manager/gradle', () => {
         config
       );
 
-      expect(dependencies).toEqual({ deps: [{ name: 'dummy' }] });
+      expect(dependencies).toEqual(depedenciesFromBuildGradleExample1);
+    });
+
+    it('should return null if there is no dependencies', () => {
+      fsMocked.readFileSync = jest.fn(() =>
+        fs.readFileSync('test/_fixtures/gradle/updatesReportEmpty.json', 'utf8')
+      );
+      const dependencies = manager.extractDependencies(
+        'content',
+        'filename',
+        config
+      );
+
+      expect(dependencies).toEqual(null);
+    });
+
+    it('should return null if gradle execution fails', () => {
+      childProcessMocked.execSync = jest.fn(() => {
+        throw new Error();
+      });
+      const dependencies = manager.extractDependencies(
+        'content',
+        'filename',
+        config
+      );
+
+      expect(dependencies).toEqual(null);
     });
 
     it('should execute gradle with the proper parameters', () => {
@@ -41,6 +99,7 @@ describe('manager/gradle', () => {
       );
       expect(childProcessMocked.execSync.mock.calls[0][1]).toMatchObject({
         cwd: 'localDir',
+        timeout: 20000,
       });
     });
 
