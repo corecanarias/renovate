@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`manager/gradle extractDependencies should execute gradle with the proper parameters 1`] = `
+Object {
+  "cwd": "localDir",
+  "shell": true,
+}
+`;
