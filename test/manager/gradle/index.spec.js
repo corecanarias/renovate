@@ -1,8 +1,8 @@
-jest.mock('fs');
+jest.mock('fs-extra');
 jest.mock('child_process');
 
-const fsMocked = require('fs');
 const fs = require('fs-extra');
+const fsReal = require('fs');
 const childProcessMocked = require('child_process');
 
 const manager = require('../../../lib/manager/gradle/index');
@@ -40,7 +40,7 @@ const depedenciesFromBuildGradleExample1 = {
   }],
 };
 
-const updatesDependenciesReport = fs.readFileSync(
+const updatesDependenciesReport = fsReal.readFileSync(
   'test/_fixtures/gradle/updatesReport.json',
   'utf8'
 );
@@ -48,15 +48,15 @@ const updatesDependenciesReport = fs.readFileSync(
 describe('manager/gradle', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    fsMocked.readFileSync = jest.fn(() => updatesDependenciesReport);
+    fs.readFile.mockReturnValue(updatesDependenciesReport);
     childProcessMocked.execSync = jest.fn(() =>
       Buffer.from('gradle output', 'utf8')
     );
   });
 
   describe('extractDependencies', () => {
-    it('should return gradle dependencies', () => {
-      const dependencies = manager.extractDependencies(
+    it('should return gradle dependencies', async () => {
+      const dependencies = await manager.extractDependencies(
         'content',
         'filename',
         config
@@ -65,11 +65,14 @@ describe('manager/gradle', () => {
       expect(dependencies).toEqual(depedenciesFromBuildGradleExample1);
     });
 
-    it('should return null if there is no dependencies', () => {
-      fsMocked.readFileSync = jest.fn(() =>
-        fs.readFileSync('test/_fixtures/gradle/updatesReportEmpty.json', 'utf8')
+    it('should return null if there is no dependencies', async () => {
+      fs.readFile.mockReturnValue(
+        fsReal.readFileSync(
+          'test/_fixtures/gradle/updatesReportEmpty.json',
+          'utf8'
+        )
       );
-      const dependencies = manager.extractDependencies(
+      const dependencies = await manager.extractDependencies(
         'content',
         'filename',
         config
@@ -78,11 +81,11 @@ describe('manager/gradle', () => {
       expect(dependencies).toEqual(null);
     });
 
-    it('should return null if gradle execution fails', () => {
+    it('should return null if gradle execution fails', async () => {
       childProcessMocked.execSync = jest.fn(() => {
         throw new Error();
       });
-      const dependencies = manager.extractDependencies(
+      const dependencies = await manager.extractDependencies(
         'content',
         'filename',
         config
@@ -91,8 +94,8 @@ describe('manager/gradle', () => {
       expect(dependencies).toEqual(null);
     });
 
-    it('should execute gradle with the proper parameters', () => {
-      manager.extractDependencies('content', 'filename', config);
+    it('should execute gradle with the proper parameters', async () => {
+      await manager.extractDependencies('content', 'filename', config);
 
       expect(childProcessMocked.execSync.mock.calls[0][0]).toBe(
         'gradle --init-script init.gradle dependencyUpdates -Drevision=release'
@@ -103,24 +106,22 @@ describe('manager/gradle', () => {
       });
     });
 
-    it('should write the gradle config file in the tmp dir', () => {
-      manager.extractDependencies('content', 'filename', config);
+    it('should write the gradle config file in the tmp dir', async () => {
+      await manager.extractDependencies('content', 'filename', config);
 
-      expect(fsMocked.writeFileSync.mock.calls[0][0]).toBe('localDir/filename');
-      expect(fsMocked.writeFileSync.mock.calls[0][1]).toBe('content');
+      expect(fs.writeFile.mock.calls[0][0]).toBe('localDir/filename');
+      expect(fs.writeFile.mock.calls[0][1]).toBe('content');
     });
 
-    it('should configure the useLatestVersion plugin', () => {
-      manager.extractDependencies('content', 'filename', config);
+    it('should configure the useLatestVersion plugin', async () => {
+      await manager.extractDependencies('content', 'filename', config);
 
-      expect(fsMocked.writeFileSync.mock.calls[1][0]).toBe(
-        'localDir/init.gradle'
-      );
+      expect(fs.writeFile.mock.calls[1][0]).toBe('localDir/init.gradle');
     });
   });
 
   describe('getPackageUpdates', () => {
-    it('should return outdated dependencies', () => {
+    it('should return outdated dependencies', async () => {
       // prettier-ignore
       const expectedOutdatedDependencies = [{
           depGroup: "cglib", name: "cglib-nodep", version: "3.1",
@@ -136,16 +137,16 @@ describe('manager/gradle', () => {
           available: {release: "2.0.5.RELEASE", milestone: null, integration: null}
       }];
 
-      const outdatedDependencies = manager.getPackageUpdates(config);
+      const outdatedDependencies = await manager.getPackageUpdates(config);
 
       expect(outdatedDependencies).toMatchObject(expectedOutdatedDependencies);
     });
 
-    it('should read the right updates report', () => {
-      manager.getPackageUpdates(config);
+    it('should read the right updates report', async () => {
+      await manager.getPackageUpdates(config);
 
-      expect(fsMocked.readFileSync.mock.calls.length).toBe(1);
-      expect(fsMocked.readFileSync.mock.calls[0][0]).toBe(
+      expect(fs.readFile.mock.calls.length).toBe(1);
+      expect(fs.readFile.mock.calls[0][0]).toBe(
         'localDir/build/dependencyUpdates/report.json'
       );
     });
@@ -153,7 +154,7 @@ describe('manager/gradle', () => {
 
   describe('updateDependency', () => {
     it('should update an existing dependency', () => {
-      const buildGradleContent = fs.readFileSync(
+      const buildGradleContent = fsReal.readFileSync(
         'test/_fixtures/gradle/build.gradle.example1',
         'utf8'
       );
