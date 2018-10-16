@@ -1,9 +1,9 @@
 jest.mock('fs-extra');
-jest.mock('child_process');
+jest.mock('child-process-promise');
 
 const fs = require('fs-extra');
 const fsReal = require('fs');
-const childProcessMocked = require('child_process');
+const { exec } = require('child-process-promise');
 
 const manager = require('../../../lib/manager/gradle/index');
 
@@ -49,9 +49,7 @@ describe('manager/gradle', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     fs.readFile.mockReturnValue(updatesDependenciesReport);
-    childProcessMocked.execSync = jest.fn(() =>
-      Buffer.from('gradle output', 'utf8')
-    );
+    exec.mockReturnValue({ stdout: 'gradle output', stderr: '' });
   });
 
   describe('extractDependencies', () => {
@@ -82,7 +80,7 @@ describe('manager/gradle', () => {
     });
 
     it('should return null if gradle execution fails', async () => {
-      childProcessMocked.execSync = jest.fn(() => {
+      exec.mockImplementation(() => {
         throw new Error();
       });
       const dependencies = await manager.extractDependencies(
@@ -97,13 +95,10 @@ describe('manager/gradle', () => {
     it('should execute gradle with the proper parameters', async () => {
       await manager.extractDependencies('content', 'filename', config);
 
-      expect(childProcessMocked.execSync.mock.calls[0][0]).toBe(
+      expect(exec.mock.calls[0][0]).toBe(
         'gradle --init-script init.gradle dependencyUpdates -Drevision=release'
       );
-      expect(childProcessMocked.execSync.mock.calls[0][1]).toMatchObject({
-        cwd: 'localDir',
-        timeout: 20000,
-      });
+      expect(exec.mock.calls[0][1]).toMatchSnapshot();
     });
 
     it('should write the gradle config file in the tmp dir', async () => {
