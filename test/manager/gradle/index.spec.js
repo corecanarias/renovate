@@ -23,6 +23,7 @@ describe('manager/gradle', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     fs.readFile.mockReturnValue(updatesDependenciesReport);
+    fs.mkdir.mockReturnValue(true);
     exec.mockReturnValue({ stdout: 'gradle output', stderr: '' });
   });
 
@@ -30,14 +31,14 @@ describe('manager/gradle', () => {
     it('should return gradle dependencies', async () => {
       const dependencies = await manager.extractDependencies(
         'content',
-        'filename',
+        'build.gradle',
         config
       );
 
       expect(dependencies).toMatchSnapshot();
     });
 
-    it('should return null if there is no dependencies', async () => {
+    it('should return null if there are no dependencies', async () => {
       fs.readFile.mockReturnValue(
         fsReal.readFileSync(
           'test/_fixtures/gradle/updatesReportEmpty.json',
@@ -46,7 +47,7 @@ describe('manager/gradle', () => {
       );
       const dependencies = await manager.extractDependencies(
         'content',
-        'filename',
+        'build.gradle',
         config
       );
 
@@ -59,7 +60,7 @@ describe('manager/gradle', () => {
       });
       const dependencies = await manager.extractDependencies(
         'content',
-        'filename',
+        'build.gradle',
         config
       );
 
@@ -67,7 +68,7 @@ describe('manager/gradle', () => {
     });
 
     it('should execute gradle with the proper parameters', async () => {
-      await manager.extractDependencies('content', 'filename', config);
+      await manager.extractDependencies('content', 'build.gradle', config);
 
       expect(exec.mock.calls[0][0]).toBe(
         'gradle --init-script init.gradle dependencyUpdates -Drevision=release'
@@ -79,16 +80,26 @@ describe('manager/gradle', () => {
     });
 
     it('should write the gradle config file in the tmp dir', async () => {
-      await manager.extractDependencies('content', 'filename', config);
+      await manager.preExtract(config, {
+        'build.gradle': 'content root file',
+        'subproject1/build.gradle': 'content subproject1',
+        'subproject1/subproject2/build.gradle': 'content subproject2'
+      });
 
-      expect(fs.writeFile.mock.calls[0][0]).toBe('localDir/filename');
-      expect(fs.writeFile.mock.calls[0][1]).toBe('content');
+      expect(fs.writeFile.mock.calls[0][0]).toBe('localDir/build.gradle');
+      expect(fs.writeFile.mock.calls[0][1]).toBe('content root file');
+
+      expect(fs.writeFile.mock.calls[1][0]).toBe('localDir/subproject1/build.gradle');
+      expect(fs.writeFile.mock.calls[1][1]).toBe('content subproject1');
+
+      expect(fs.writeFile.mock.calls[2][0]).toBe('localDir/subproject1/subproject2/build.gradle');
+      expect(fs.writeFile.mock.calls[2][1]).toBe('content subproject2');
     });
 
     it('should configure the useLatestVersion plugin', async () => {
-      await manager.extractDependencies('content', 'filename', config);
+      await manager.extractDependencies('content', 'build.gradle', config);
 
-      expect(fs.writeFile.mock.calls[1][0]).toBe('localDir/init.gradle');
+      expect(fs.writeFile.mock.calls[0][0]).toBe('localDir/init.gradle');
     });
   });
 
