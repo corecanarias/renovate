@@ -8,19 +8,29 @@ jest.mock('../../lib/util/host-rules');
 
 const includesJson = fs.readFileSync('test/_fixtures/packagist/includes.json');
 const beytJson = fs.readFileSync('test/_fixtures/packagist/1beyt.json');
+const mailchimpJson = fs.readFileSync(
+  'test/_fixtures/packagist/mailchimp-api.json'
+);
 
 describe('datasource/packagist', () => {
   describe('getPkgReleases', () => {
+    let config;
     beforeEach(() => {
       jest.resetAllMocks();
-      hostRules.find.mockReturnValue({
-        username: 'some-username',
-        password: 'some-password',
-      });
+      hostRules.find = jest.fn(input => input);
+      global.repoCache = {};
+      config = {
+        registryUrls: [
+          {
+            type: 'composer',
+            url: 'https://composer.renovatebot.com',
+          },
+        ],
+      };
       return global.renovateCache.rmAll();
     });
     it('supports custom registries', async () => {
-      const config = {
+      config = {
         registryUrls: [
           {
             type: 'composer',
@@ -68,7 +78,7 @@ describe('datasource/packagist', () => {
       });
       const res = await datasource.getPkgReleases(
         'pkg:packagist/vendor/package-name',
-        {}
+        config
       );
       expect(res).toMatchSnapshot();
     });
@@ -80,11 +90,28 @@ describe('datasource/packagist', () => {
       );
       const res = await datasource.getPkgReleases(
         'pkg:packagist/vendor/package-name',
-        {}
+        config
+      );
+      expect(res).toBeNull();
+    });
+    it('handles not found registries', async () => {
+      got.mockImplementationOnce(() =>
+        Promise.reject({
+          statusCode: 404,
+          url: 'https://some.registry/packages.json',
+        })
+      );
+      const res = await datasource.getPkgReleases(
+        'pkg:packagist/drewm/mailchip-api',
+        config
       );
       expect(res).toBeNull();
     });
     it('supports includes packages', async () => {
+      hostRules.find = jest.fn(() => ({
+        username: 'some-username',
+        password: 'some-password',
+      }));
       const packagesJson = {
         packages: [],
         includes: {
@@ -101,7 +128,7 @@ describe('datasource/packagist', () => {
       });
       const res = await datasource.getPkgReleases(
         'pkg:packagist/guzzlehttp/guzzle',
-        {}
+        config
       );
       expect(res).toMatchSnapshot();
       expect(res).not.toBeNull();
@@ -140,7 +167,7 @@ describe('datasource/packagist', () => {
       });
       const res = await datasource.getPkgReleases(
         'pkg:packagist/wpackagist-plugin/1beyt',
-        {}
+        config
       );
       expect(res).toMatchSnapshot();
       expect(res).not.toBeNull();
@@ -179,9 +206,17 @@ describe('datasource/packagist', () => {
       });
       const res = await datasource.getPkgReleases(
         'pkg:packagist/some/other',
-        {}
+        config
       );
       expect(res).toBeNull();
+    });
+    it('processes real versioned data', async () => {
+      got.mockReturnValueOnce({
+        body: JSON.parse(mailchimpJson),
+      });
+      expect(
+        await datasource.getPkgReleases('pkg:packagist/drewm/mailchimp-api')
+      ).toMatchSnapshot();
     });
   });
 });
